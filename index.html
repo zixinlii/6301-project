@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mammography Interventions — Interactive Dashboard</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <style>
+    :root{
+      --bg:#0b0f14; --card:#121922; --muted:#a8b3cf; --text:#e7ecf5; --accent:#60a5fa; --ring:#1f2937;
+    }
+    html,body{margin:0; background:var(--bg); color:var(--text); font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";}
+    .wrap{max-width:1200px; margin:32px auto; padding:0 16px;}
+    h1{font-size: clamp(28px, 4vw, 44px); line-height:1.1; margin:0 0 8px;}
+    .sub{color:var(--muted); margin-bottom:24px}
+    .grid{display:grid; grid-template-columns: 1fr; gap:20px}
+    @media(min-width:960px){ .grid{grid-template-columns: 1fr 1fr} }
+    .card{background:var(--card); border:1px solid #1f2937; border-radius:18px; padding:22px; box-shadow: 0 10px 20px rgba(0,0,0,.25)}
+    .card h2{margin:0 0 12px; font-size: clamp(18px, 2.5vw, 26px)}
+    .note{color:var(--muted); margin-top:10px}
+    .footer{color:var(--muted); margin-top:26px; font-size:14px}
+    .error{color:#fda4af; font-weight:600}
+    a{color:var(--accent)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Visualizing the Effects of Mail and Phone Interventions on Mammography Screening</h1>
+    <div class="sub">Age distribution, compliance by intervention, and follow‑up cognitive stage — built with Plotly. (<strong>Static hosting friendly</strong>: no Python/Colab required.)</div>
+
+    <div class="grid">
+      <section class="card">
+        <h2>Age Distribution of Participants</h2>
+        <div id="age_hist" style="height:360px"></div>
+        <div class="note" id="age_note">Most participants were between 50 and 70 years old.</div>
+      </section>
+
+      <section class="card">
+        <h2>Mammography Compliance by Intervention</h2>
+        <div id="compliance_bar" style="height:360px"></div>
+        <div class="note">Compliance = share with 6‑month screening complete.</div>
+      </section>
+    </div>
+
+    <section class="card" style="margin-top:20px">
+      <h2>Follow‑up Cognitive Stage by Intervention</h2>
+      <div id="stage_stack" style="height:420px"></div>
+      <div class="note">Stacked counts by stage at follow‑up.</div>
+    </section>
+
+    <div class="footer">
+      Data guide: expects a file named <code>mammography_data.csv</code> in the same folder as this page. Key columns (case‑insensitive):
+      <code>age</code>, <code>treatment</code> (e.g., Control/Phone/Mail/Mail+Phone), <code>resp6</code> (0/1 compliance),
+      and <code>stage</code> (follow‑up stage like Pre/Contemplation/Action).<br>
+      © 2025 Your Name — Publish this via GitHub Pages to meet course requirements.
+    </div>
+  </div>
+
+<script>
+// --- Utility: tolerant column lookup (case/underscore insensitive, supports aliases)
+function findCol(cols, aliases){
+  const norm = s=> String(s).toLowerCase().replace(/\W+/g,'');
+  const normCols = cols.map(c=>({raw:c, k:norm(c)}));
+  for(const a of aliases){
+    const k = norm(a);
+    const hit = normCols.find(x=>x.k===k);
+    if(hit) return hit.raw;
+  }
+  // fallback: partial includes
+  for(const a of aliases){
+    const k = norm(a);
+    const hit = normCols.find(x=>x.k.includes(k) || k.includes(x.k));
+    if(hit) return hit.raw;
+  }
+  return null;
+}
+
+function safeNumber(x){
+  const v = Number(x);
+  return Number.isFinite(v) ? v : null;
+}
+
+function groupBy(arr, keyFn){
+  const m = new Map();
+  for(const r of arr){
+    const k = keyFn(r);
+    if(!m.has(k)) m.set(k, []);
+    m.get(k).push(r);
+  }
+  return m;
+}
+
+// --- Load CSV (must be in same repo/path)
+const CSV_PATH = 'mammography_data.csv';
+
+function showError(where, msg){
+  const el = document.getElementById(where);
+  if(el){ el.innerHTML = `<div class="error">${msg}</div>`; }
+}
+
+Papa.parse(CSV_PATH, {
+  download: true,
+  header: true,
+  dynamicTyping: false,
+  skipEmptyLines: true,
+  complete: function(res){
+    if(!res || !res.data || !res.data.length){
+      showError('age_hist', 'No data rows found in mammography_data.csv');
+      showError('compliance_bar', 'No data rows found.');
+      showError('stage_stack', 'No data rows found.');
+      return;
+    }
+    const rows = res.data;
+    const cols = res.meta.fields || Object.keys(rows[0]);
+
+    // Column detection
+    const ageCol   = findCol(cols, ['age','ages','Age']);
+    const trtCol   = findCol(cols, ['treatment','treatment_f','group','arm','Treatment']);
+    const respCol  = findCol(cols, ['resp6','compliance6','six_month','screen6','y','Resp6']);
+    const stageCol = findCol(cols, ['stagefwup','fu_stage','followup_stage','stage','Stagefwup']);
+
+    // Map to normalized records
+    const data = rows.map(r=>({
+      age: safeNumber(r[ageCol]),
+      trt: (r[trtCol]||'').toString().trim(),
+      resp: (r[respCol]||'').toString().trim(),
+      stage: (r[stageCol]||'').toString().trim()
+    })).filter(x=>x.trt);
+
+    // Normalize resp to 0/1
+    for(const d of data){
+      const s = d.resp.toLowerCase();
+      if(s===''||s==='na'||s==='null'){ d.resp=null; continue; }
+      if(['1','yes','y','true','t','compliant'].includes(s)) d.resp=1; else if(['0','no','n','false','f','noncompliant'].includes(s)) d.resp=0; else d.resp = safeNumber(d.resp);
+    }
+
+    // Order treatments if present
+    const order = ['Control','Phone','Mail','Mail+Phone'];
+
+    // --- Figure 1: Age histogram
+    const ages = data.map(d=>d.age).filter(v=>v!=null);
+    if(ages.length){
+      Plotly.newPlot('age_hist', [{
+        type:'histogram', x: ages, nbinsx: 20, opacity:0.95
+      }], {
+        margin:{t:20,r:10,b:40,l:40}, xaxis:{title:'Age'}, yaxis:{title:'Count'}, paper_bgcolor:'transparent', plot_bgcolor:'transparent'
+      }, {displaylogo:false, responsive:true});
+    } else {
+      showError('age_hist','Could not find an age column. Make sure your CSV has a column named "age".');
+    }
+
+    // --- Figure 2: Compliance by intervention
+    const byTrt = groupBy(data.filter(d=>d.resp!=null), d=>d.trt || 'Unknown');
+    const trts = Array.from(byTrt.keys()).sort((a,b)=>{
+      const ia = order.indexOf(a), ib = order.indexOf(b);
+      return (ia===-1)-(ib===-1) || ia-ib || a.localeCompare(b);
+    });
+    const rates = trts.map(t=>{
+      const arr = byTrt.get(t) || [];
+      const m = arr.filter(x=>x.resp===1).length;
+      return arr.length ? m/arr.length*100 : 0;
+    });
+    if(trts.length){
+      Plotly.newPlot('compliance_bar', [{
+        type:'bar', x: trts, y: rates, text: rates.map(v=>v.toFixed(1)+'%'), textposition:'auto'
+      }], {
+        margin:{t:20,r:10,b:40,l:40}, yaxis:{title:'Compliance (%)', rangemode:'tozero'}, xaxis:{title:'Intervention'}, paper_bgcolor:'transparent', plot_bgcolor:'transparent'
+      }, {displaylogo:false, responsive:true});
+    } else {
+      showError('compliance_bar','Could not compute compliance — check columns treatment/resp6.');
+    }
+
+    // --- Figure 3: Stage by intervention (stacked)
+    const stageByTrt = new Map();
+    const stagesSet = new Set();
+    for(const d of data){
+      if(!d.trt || !d.stage) continue;
+      const map = stageByTrt.get(d.trt) || new Map();
+      map.set(d.stage, (map.get(d.stage)||0)+1);
+      stageByTrt.set(d.trt, map);
+      stagesSet.add(d.stage);
+    }
+    const stages = Array.from(stagesSet).sort();
+    if(stageByTrt.size){
+      const x = trts.length? trts : Array.from(stageByTrt.keys());
+      const traces = stages.map(s=>({
+        type:'bar', name:s, x: x,
+        y: x.map(t=> (stageByTrt.get(t)?.get(s)) || 0)
+      }));
+      Plotly.newPlot('stage_stack', traces, {
+        barmode:'stack', margin:{t:20,r:10,b:40,l:40}, xaxis:{title:'Intervention'}, yaxis:{title:'Participants'}, legend:{orientation:'h'}, paper_bgcolor:'transparent', plot_bgcolor:'transparent'
+      }, {displaylogo:false, responsive:true});
+    } else {
+      showError('stage_stack','Could not find a follow‑up stage column. Expected something like fu_stage or stagefwup.');
+    }
+  },
+  error: function(err){
+    showError('age_hist', 'Failed to load CSV: ' + err);
+    showError('compliance_bar', 'Failed to load CSV.');
+    showError('stage_stack', 'Failed to load CSV.');
+  }
+});
+</script>
+</body>
+</html>
