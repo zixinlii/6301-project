@@ -11,139 +11,124 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     :root{
-      /* 新主题：深色背景 + 柔和高饱和点缀 */
-      --bg:#0b0f14; 
-      --card:#0f1722; 
-      --border:#1b2737;
-      --muted:#a9b6d6; 
-      --text:#eaf0fb; 
-      --accent:#8ab4ff; 
-      --ring:#223147;
+      /* 深色专业主题 */
+      --bg:#0b0f14; --bg-soft:#0f1722; --border:#1b2737;
+      --text:#eaf0fb; --muted:#a9b6d6; --ring:#223147; --title:#f3f6ff;
 
-      /* 调色板（与 Plotly colorway 保持一致） */
-      --c1:#7dd3fc;  /* sky */
-      --c2:#c4b5fd;  /* violet */
-      --c3:#fca5a5;  /* coral */
-      --c4:#fcd34d;  /* amber */
-      --c5:#34d399;  /* emerald */
-      --c6:#f472b6;  /* pink */
+      /* 统一调色板（与图例一致） */
+      --c1:#5b8fd6; /* 深蓝 (50–54)   */
+      --c2:#f39a3e; /* 橙色  (55–59)   */
+      --c3:#e56767; /* 珊瑚  (60–64)   */
+      --c4:#5ab2a6; /* 青绿  (65–69)   */
+      --c5:#55a862; /* 绿色  (70–74)   */
+      --c6:#d7b54a; /* 琥珀  (75–79)   */
+      --c7:#a780ba; /* 紫色  (80–84)   */
+      --c8:#f08fb8; /* 粉色  (>85)     */
+
+      --t1:#5b8fd6; --t2:#f39a3e; --t3:#e56767; --t4:#5ab2a6; /* treatment 备用 */
     }
     html,body{
       margin:0; background:var(--bg); color:var(--text);
-      font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+      font-family:"Inter", ui-sans-serif, system-ui, -apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+      -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
     }
-    .wrap{max-width:1200px; margin:32px auto; padding:0 16px;}
-    h1{font-size: clamp(28px, 4vw, 44px); line-height:1.15; margin:0 0 8px; letter-spacing:.2px}
-    .sub{color:var(--muted); margin-bottom:24px}
-    .grid{display:grid; grid-template-columns: 1fr; gap:20px}
-    @media(min-width:960px){ .grid{grid-template-columns: 1fr 1fr} }
+    .wrap{max-width:1250px; margin:32px auto; padding:0 16px;}
+    h1{margin:0 0 8px; font-size:clamp(28px,4vw,44px); color:var(--title); letter-spacing:.2px}
+    .sub{color:var(--muted); margin-bottom:22px}
+    .grid{
+      display:grid; gap:18px;
+      grid-template-columns: 1.2fr 1fr;  /* 左图稍宽一点 */
+      grid-template-rows: auto auto;
+    }
+    .grid .wide{grid-column:1 / span 2}  /* 横跨两列 */
     .card{
-      background: radial-gradient(1200px 400px at 10% -20%, rgba(138,180,255,.08), transparent 60%),
-                  radial-gradient(900px 300px at 110% 10%, rgba(125,211,252,.06), transparent 60%),
-                  var(--card);
-      border:1px solid var(--border); border-radius:18px; padding:22px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.02);
+      background: radial-gradient(1000px 360px at -10% -20%, rgba(138,180,255,.07), transparent 60%),
+                  radial-gradient(800px 280px at 120% 10%,  rgba(125,211,252,.05), transparent 60%),
+                  var(--bg-soft);
+      border:1px solid var(--border); border-radius:18px; padding:20px;
+      box-shadow:0 10px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.02);
     }
-    .card h2{margin:0 0 12px; font-size: clamp(18px, 2.5vw, 26px)}
-    .note{color:var(--muted); margin-top:10px}
-    .footer{color:var(--muted); margin-top:26px; font-size:14px}
+    .card h2{margin:0 0 10px; font-size:clamp(18px,2.2vw,26px)}
+    .note{color:var(--muted); margin-top:8px}
+    .desc{color:var(--muted); margin-top:18px; line-height:1.6}
     .error{color:#fda4af; font-weight:600}
-    a{color:var(--accent)}
+    a{color:#8ab4ff}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>Visualizing the Effects of Mail and Phone Interventions on Mammography Screening</h1>
-    <div class="sub">Age distribution, compliance by intervention, and follow-up cognitive stage — built with Plotly. (<strong>Static hosting friendly</strong>: no Python/Colab required.)</div>
+    <h1>Visualizing the Effects of Tailored Interventions on Mammography Screening</h1>
+    <div class="sub">Age distribution, compliance by intervention, and follow-up cognitive stage — built with Plotly (static hosting friendly).</div>
 
     <div class="grid">
+      <!-- 上排：年龄分布（左） -->
       <section class="card">
         <h2>Age Distribution of Participants</h2>
-        <div id="age_hist" style="height:360px"></div>
-        <div class="note" id="age_note">Most participants were between 50 and 70 years old.</div>
+        <div id="age_bar" style="height:380px"></div>
+        <div class="note">x-axis: <b>Age Range (years)</b> · y-axis: <b>Number of Participants</b></div>
       </section>
 
+      <!-- 上排：依从性（右） -->
       <section class="card">
-        <h2>Mammography Compliance by Intervention</h2>
-        <div id="compliance_bar" style="height:360px"></div>
-        <div class="note">Compliance = share with 6-month screening complete.</div>
+        <h2>Mammography Compliance by Intervention Group</h2>
+        <div id="compliance_bar" style="height:380px"></div>
+        <div class="note">x-axis: <b>Treatment</b> · y-axis: <b>Mammography Compliance (%)</b></div>
       </section>
-    </div>
 
-    <section class="card" style="margin-top:20px">
-      <h2>Follow-up Cognitive Stage by Intervention</h2>
-      <div id="stage_stack" style="height:420px"></div>
-      <div class="note">Stacked counts by stage at follow-up.</div>
-    </section>
+      <!-- 下排：认知阶段（横跨） -->
+      <section class="card wide">
+        <h2>Follow-up Cognitive Stage by Intervention Group</h2>
+        <div id="stage_stack" style="height:420px"></div>
+        <div class="note">x-axis: <b>Treatment</b> · y-axis: <b>Proportion of Participants (%)</b></div>
 
-    <div class="footer">
-      Data guide: expects a file named <code>mammography_data.csv</code> in the same folder as this page. Key columns (case-insensitive):
-      <code>age</code>, <code>treatment</code> (e.g., Control/Phone/Mail/Mail+Phone), <code>resp6</code> (0/1 compliance),
-      and <code>stage</code> (follow-up stage like Pre/Contemplation/Action).<br>
-      /* © 2025 Your Name — Publish this via GitHub Pages to meet course requirements. */
+        <!-- 说明段 -->
+        <div class="desc">
+          This dashboard summarizes data from a randomized trial examining how mail and/or phone interventions influence
+          mammography screening behavior. Most participants were between 50 and 70 years old. Compliance rates increased
+          across all intervention groups, with the <b>Mail + Phone</b> group achieving the highest rate (~39%).
+          The cognitive stage distribution further shows that mailed interventions helped more women progress to the
+          <b>Action</b> stage compared with usual care, highlighting the effectiveness of tailored communication strategies
+          in promoting mammography screening adherence.
+        </div>
+      </section>
     </div>
   </div>
 
 <script>
-/* ---------- Theme + helpers ---------- */
-const palette = ['#7dd3fc','#c4b5fd','#fca5a5','#fcd34d','#34d399','#f472b6'];
+/* ============= 全局主题与工具函数 ============= */
+const paletteAge = ['var(--c1)','var(--c2)','var(--c3)','var(--c4)','var(--c5)','var(--c6)','var(--c7)','var(--c8)'];
+const paletteStage = ['#5b8fd6','#f39a3e','#e56767','#5ab2a6','#a780ba','#f08fb8']; // 够用就循环
 const baseLayout = {
-  margin:{t:24,r:14,b:46,l:46},
+  margin:{t:26,r:120,b:56,l:60},     // 右侧留白给竖向 legend
   font:{family:'Inter, ui-sans-serif, system-ui', color:'#eaf0fb'},
   paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)',
-  xaxis:{gridcolor:'#223147', zerolinecolor:'#223147', linecolor:'#223147', ticks:'outside', tickcolor:'#223147'},
-  yaxis:{gridcolor:'#223147', zerolinecolor:'#223147', linecolor:'#223147', ticks:'outside', tickcolor:'#223147'},
-  legend:{orientation:'h', bgcolor:'rgba(0,0,0,0)', bordercolor:'rgba(0,0,0,0)'},
-  colorway: palette,
+  xaxis:{gridcolor:'var(--ring)', zerolinecolor:'var(--ring)', linecolor:'var(--ring)', ticks:'outside', tickcolor:'var(--ring)'},
+  yaxis:{gridcolor:'var(--ring)', zerolinecolor:'var(--ring)', linecolor:'var(--ring)', ticks:'outside', tickcolor:'var(--ring)'},
+  showlegend:true,
+  legend:{
+    orientation:'v', x:1.02, xanchor:'left', y:1,
+    bgcolor:'rgba(0,0,0,0)', bordercolor:'rgba(0,0,0,0)', itemsizing:'constant'
+  },
   hoverlabel:{bgcolor:'#0f1722', bordercolor:'#223147', font:{color:'#eaf0fb'}}
 };
-
 function findCol(cols, aliases){
   const norm = s=> String(s).toLowerCase().replace(/\W+/g,'');
-  const normCols = cols.map(c=>({raw:c, k:norm(c)}));
-  for(const a of aliases){
-    const k = norm(a);
-    const hit = normCols.find(x=>x.k===k);
-    if(hit) return hit.raw;
-  }
-  for(const a of aliases){
-    const k = norm(a);
-    const hit = normCols.find(x=>x.k.includes(k) || k.includes(x.k));
-    if(hit) return hit.raw;
-  }
+  const nc = cols.map(c=>({raw:c, k:norm(c)}));
+  for(const a of aliases){ const k=norm(a); const hit = nc.find(x=>x.k===k); if(hit) return hit.raw; }
+  for(const a of aliases){ const k=norm(a); const hit = nc.find(x=>x.k.includes(k)||k.includes(x.k)); if(hit) return hit.raw; }
   return null;
 }
-const safeNumber = x => Number.isFinite(Number(x)) ? Number(x) : null;
-function groupBy(arr, keyFn){
-  const m = new Map();
-  for(const r of arr){
-    const k = keyFn(r);
-    if(!m.has(k)) m.set(k, []);
-    m.get(k).push(r);
-  }
-  return m;
-}
-function showError(where, msg){
-  const el = document.getElementById(where);
-  if(el){ el.innerHTML = `<div class="error">${msg}</div>`; }
-}
+const num = x => Number.isFinite(Number(x)) ? Number(x) : null;
+function groupBy(arr, keyFn){ const m=new Map(); for(const r of arr){ const k=keyFn(r); if(!m.has(k)) m.set(k,[]); m.get(k).push(r);} return m; }
+function err(id,msg){ const el=document.getElementById(id); if(el) el.innerHTML=`<div class="error">${msg}</div>`; }
 
-/* ---------- Load CSV ---------- */
-const CSV_PATH = 'mammography_data.csv';
-
-Papa.parse(CSV_PATH, {
-  download: true,
-  header: true,
-  dynamicTyping: false,
-  skipEmptyLines: true,
+/* ============= CSV 读取与图表 ============= */
+const CSV_PATH='mammography_data.csv';
+Papa.parse(CSV_PATH,{
+  download:true, header:true, skipEmptyLines:true,
   complete: function(res){
-    if(!res || !res.data || !res.data.length){
-      ['age_hist','compliance_bar','stage_stack'].forEach(id=>showError(id, 'No data rows found in mammography_data.csv'));
-      return;
-    }
-    const rows = res.data;
-    const cols = res.meta.fields || Object.keys(rows[0]);
+    if(!res?.data?.length){ ['age_bar','compliance_bar','stage_stack'].forEach(id=>err(id,'No data rows found.')); return; }
+    const rows = res.data, cols = res.meta.fields || Object.keys(rows[0]);
 
     const ageCol   = findCol(cols, ['age','ages','Age']);
     const trtCol   = findCol(cols, ['treatment','treatment_f','group','arm','Treatment']);
@@ -151,120 +136,128 @@ Papa.parse(CSV_PATH, {
     const stageCol = findCol(cols, ['stagefwup','fu_stage','followup_stage','stage','Stagefwup']);
 
     const data = rows.map(r=>({
-      age: safeNumber(r[ageCol]),
+      age: num(r[ageCol]),
       trt: (r[trtCol]||'').toString().trim(),
       resp: (r[respCol]||'').toString().trim(),
       stage: (r[stageCol]||'').toString().trim()
     })).filter(x=>x.trt);
 
-    // normalize resp to 0/1
+    // 归一化 resp -> 0/1
     for(const d of data){
       const s = String(d.resp).toLowerCase();
       if(s===''||s==='na'||s==='null'){ d.resp=null; continue; }
       if(['1','yes','y','true','t','compliant'].includes(s)) d.resp=1;
       else if(['0','no','n','false','f','noncompliant'].includes(s)) d.resp=0;
-      else d.resp = safeNumber(d.resp);
+      else d.resp = num(d.resp);
     }
 
-    const order = ['Control','Phone','Mail','Mail+Phone'];
+    const trtOrder = ['Control','Phone','Mail','Mail & Phone','Mail+Phone'];
+    const normTrt = t => t.replace('+',' & ');
 
-    /* ---------- Figure 1: Age histogram + mean line ---------- */
+    /* ---------- 图1：年龄段分布（与截图一致，用分段柱状 + 右侧图例） ---------- */
+    const bins = [
+      {label:'50–54', in:(a)=>a>=50 && a<55, color:'var(--c1)'},
+      {label:'55–59', in:(a)=>a>=55 && a<60, color:'var(--c2)'},
+      {label:'60–64', in:(a)=>a>=60 && a<65, color:'var(--c3)'},
+      {label:'65–69', in:(a)=>a>=65 && a<70, color:'var(--c4)'},
+      {label:'70–74', in:(a)=>a>=70 && a<75, color:'var(--c5)'},
+      {label:'75–79', in:(a)=>a>=75 && a<80, color:'var(--c6)'},
+      {label:'80–84', in:(a)=>a>=80 && a<85, color:'var(--c7)'},
+      {label:'>85',   in:(a)=>a>=85,         color:'var(--c8)'}
+    ];
     const ages = data.map(d=>d.age).filter(v=>v!=null);
     if(ages.length){
-      const meanAge = ages.reduce((a,b)=>a+b,0)/ages.length;
-      const hist = {
-        type:'histogram',
-        x: ages,
-        nbinsx: 20,
-        marker:{color: 'rgba(125,211,252,.85)', line:{color:'rgba(255,255,255,.25)', width:1}},
-        hovertemplate:'Age: %{x}<br>Count: %{y}<extra></extra>',
-        opacity: 0.95
-      };
+      const traces = bins.map((b,i)=>{
+        const n = ages.filter(a=>b.in(a)).length;
+        return {
+          type:'bar',
+          name: b.label, showlegend:true,
+          x:[b.label], y:[n],
+          marker:{color:b.color, line:{color:'rgba(255,255,255,.22)', width:1}},
+          text:[n], textposition:'outside',
+          hovertemplate:`Age Range: ${b.label}<br>Count: %{y}<extra></extra>`
+        };
+      });
       const layout = {
         ...baseLayout,
-        xaxis:{...baseLayout.xaxis, title:'Age'},
-        yaxis:{...baseLayout.yaxis, title:'Count'},
-        shapes:[{
-          type:'line', x0:meanAge, x1:meanAge, y0:0, y1:1, yref:'paper',
-          line:{color:'#c4b5fd', width:2, dash:'dash'}
-        }],
-        annotations:[{
-          x: meanAge, y: 1, yref:'paper', xanchor:'left', yanchor:'top',
-          text:`Mean: ${meanAge.toFixed(1)}`, showarrow:false, font:{size:12, color:'#c4b5fd'}
-        }]
+        xaxis:{...baseLayout.xaxis, title:'Age Range (years)'},
+        yaxis:{...baseLayout.yaxis, title:'Number of Participants', rangemode:'tozero'},
+        barmode:'group'
       };
-      Plotly.newPlot('age_hist', [hist], layout, {displaylogo:false, responsive:true});
-    }else{
-      showError('age_hist','Could not find an age column. Make sure your CSV has a column named "age".');
+      Plotly.newPlot('age_bar', traces, layout, {displaylogo:false, responsive:true});
+    } else {
+      err('age_bar','Could not find an age column. Expected "age".');
     }
 
-    /* ---------- Figure 2: Compliance by intervention ---------- */
-    const byTrt = groupBy(data.filter(d=>d.resp!=null), d=>d.trt || 'Unknown');
+    /* ---------- 图2：依从性（百分比） ---------- */
+    const byTrt = groupBy(data.filter(d=>d.resp!=null), d=>normTrt(d.trt||'Unknown'));
     const trts = Array.from(byTrt.keys()).sort((a,b)=>{
-      const ia = order.indexOf(a), ib = order.indexOf(b);
+      const ia = trtOrder.indexOf(a), ib = trtOrder.indexOf(b);
       return (ia===-1)-(ib===-1) || ia-ib || a.localeCompare(b);
     });
-    const rates = trts.map(t=>{
-      const arr = byTrt.get(t) || [];
-      const m = arr.filter(x=>x.resp===1).length;
-      return arr.length ? m/arr.length*100 : 0;
-    });
     if(trts.length){
+      const pct = trts.map(t=>{
+        const arr = byTrt.get(t)||[];
+        const m = arr.filter(x=>x.resp===1).length;
+        return arr.length ? m/arr.length*100 : 0;
+      });
       const bar = {
         type:'bar',
-        x: trts, y: rates,
-        text: rates.map(v=>v.toFixed(1)+'%'), textposition:'outside',
-        marker:{color: palette.map((c,i)=>palette[i%palette.length])},
-        hovertemplate:'%{x}<br>Compliance: %{y:.1f}%<extra></extra>'
+        x:trts, y:pct,
+        marker:{color:['var(--t1)','var(--t2)','var(--t3)','var(--t4)']},
+        text:pct.map(v=>v.toFixed(0)+'%'), textposition:'outside',
+        hovertemplate:'%{x}<br>Compliance: %{y:.1f}%<extra></extra>',
+        showlegend:false
       };
       const layout = {
         ...baseLayout,
-        xaxis:{...baseLayout.xaxis, title:'Intervention'},
-        yaxis:{...baseLayout.yaxis, title:'Compliance (%)', rangemode:'tozero'},
-        margin:{t:28,r:18,b:54,l:56}
+        xaxis:{...baseLayout.xaxis, title:'Treatment'},
+        yaxis:{...baseLayout.yaxis, title:'Mammography Compliance (%)', range:[0,100], tickformat:'.0f'},
+        legend:{...baseLayout.legend, x:1.02, y:1}
       };
       Plotly.newPlot('compliance_bar', [bar], layout, {displaylogo:false, responsive:true});
-    }else{
-      showError('compliance_bar','Could not compute compliance — check columns treatment/resp6.');
+    } else {
+      err('compliance_bar','Could not compute compliance — check columns treatment/resp6.');
     }
 
-    /* ---------- Figure 3: Stacked stage by intervention ---------- */
+    /* ---------- 图3：随访认知阶段（堆叠，占比 %） ---------- */
     const stageByTrt = new Map();
     const stagesSet = new Set();
     for(const d of data){
       if(!d.trt || !d.stage) continue;
-      const map = stageByTrt.get(d.trt) || new Map();
-      map.set(d.stage, (map.get(d.stage)||0)+1);
-      stageByTrt.set(d.trt, map);
+      const t = normTrt(d.trt);
+      const m = stageByTrt.get(t) || new Map();
+      m.set(d.stage, (m.get(d.stage)||0)+1);
+      stageByTrt.set(t, m);
       stagesSet.add(d.stage);
     }
-    const stages = Array.from(stagesSet).sort();
+    const stages = Array.from(stagesSet).sort();  // e.g., Action/Contemplation/Precontemplation
     if(stageByTrt.size){
-      const x = trts.length? trts : Array.from(stageByTrt.keys());
-      const traces = stages.map((s, i)=>({
-        type:'bar', name:s, x: x,
-        y: x.map(t=> (stageByTrt.get(t)?.get(s)) || 0),
-        marker:{color: palette[i%palette.length]},
-        hovertemplate:'%{x}<br>'+s+': %{y}<extra></extra>'
+      const x = trts.length ? trts : Array.from(stageByTrt.keys());
+      const totals = x.map(t=>{
+        const m = stageByTrt.get(t)||new Map();
+        let s=0; for(const v of m.values()) s+=v; return s||1;
+      });
+      const traces = stages.map((s,i)=>({
+        type:'bar', name:s, x:x,
+        y: x.map((t,idx)=> ((stageByTrt.get(t)?.get(s))||0) / totals[idx] * 100),
+        marker:{color: paletteStage[i%paletteStage.length]},
+        hovertemplate:`%{x}<br>${s}: %{y:.2f}%<extra></extra>`
       }));
       const layout = {
         ...baseLayout,
         barmode:'stack',
-        xaxis:{...baseLayout.xaxis, title:'Intervention'},
-        yaxis:{...baseLayout.yaxis, title:'Participants'},
-        margin:{t:28,r:18,b:54,l:56},
-        legend:{...baseLayout.legend, orientation:'h', y:-0.18}
+        xaxis:{...baseLayout.xaxis, title:'Treatment'},
+        yaxis:{...baseLayout.yaxis, title:'Proportion of Participants (%)', range:[0,100], tickformat:'.0f'},
+        legend:{...baseLayout.legend, x:1.02, y:1}
       };
       Plotly.newPlot('stage_stack', traces, layout, {displaylogo:false, responsive:true});
-    }else{
-      showError('stage_stack','Could not find a follow-up stage column. Expected something like fu_stage or stagefwup.');
+    } else {
+      err('stage_stack','Could not find a follow-up stage column (e.g., fu_stage).');
     }
   },
-  error: function(err){
-    ['age_hist','compliance_bar','stage_stack'].forEach(id=>showError(id, 'Failed to load CSV: '+err));
-  }
+  error: function(e){ ['age_bar','compliance_bar','stage_stack'].forEach(id=>err(id,'Failed to load CSV: '+e)); }
 });
 </script>
 </body>
 </html>
-
