@@ -11,7 +11,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     :root{
-      /* 深色主题 */
       --bg:#0b0f14; --bg-soft:#0f1722; --border:#1b2737;
       --text:#eaf0fb; --muted:#a9b6d6; --ring:#223147; --title:#f3f6ff;
     }
@@ -23,18 +22,22 @@
     .wrap{max-width:1250px; margin:32px auto; padding:0 16px;}
     h1{margin:0 0 8px; font-size:clamp(28px,4vw,44px); color:var(--title); letter-spacing:.2px}
     .sub{color:var(--muted); margin-bottom:22px}
-    .grid{display:grid; gap:18px; grid-template-columns:1.2fr 1fr; grid-template-rows:auto auto;}
-    .grid .wide{grid-column:1 / span 2}
+    .grid{
+      display:grid; gap:18px;
+      grid-template-columns:1fr 1fr; /* 三张图同等宽度 */
+    }
+    .wide{grid-column:1 / span 2}      /* 说明文本单独占两列 */
     .card{
-      background:radial-gradient(1000px 360px at -10% -20%,rgba(138,180,255,.07),transparent 60%),
-                 radial-gradient(800px 280px at 120% 10%,rgba(125,211,252,.05),transparent 60%),
-                 var(--bg-soft);
+      background:
+        radial-gradient(1000px 360px at -10% -20%,rgba(138,180,255,.07),transparent 60%),
+        radial-gradient(800px 280px at 120% 10%,rgba(125,211,252,.05),transparent 60%),
+        var(--bg-soft);
       border:1px solid var(--border); border-radius:18px; padding:20px;
       box-shadow:0 10px 30px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.02);
     }
     .card h2{margin:0 0 10px; font-size:clamp(18px,2.2vw,26px)}
     .note{color:var(--muted); margin-top:8px}
-    .desc{color:var(--muted); margin-top:18px; line-height:1.6}
+    .desc{color:var(--muted); line-height:1.6}
     .error{color:#fda4af; font-weight:600}
     a{color:#8ab4ff}
   </style>
@@ -45,27 +48,34 @@
     <div class="sub">Age distribution, compliance by intervention, and follow-up cognitive stage — built with Plotly (static hosting friendly).</div>
 
     <div class="grid">
+      <!-- 图一：年龄分布 -->
       <section class="card">
         <h2>Age Distribution of Participants</h2>
         <div id="age_bar" style="height:380px"></div>
         <div class="note">x-axis: <b>Age Range (years)</b> · y-axis: <b>Number of Participants</b></div>
       </section>
 
+      <!-- 图二：依从性 -->
       <section class="card">
         <h2>Mammography Compliance by Intervention Group</h2>
         <div id="compliance_bar" style="height:380px"></div>
         <div class="note">x-axis: <b>Treatment</b> · y-axis: <b>Mammography Compliance (%)</b></div>
       </section>
 
-      <section class="card wide">
+      <!-- 图三：随访阶段（与图一/二同尺寸，不再跨两列） -->
+      <section class="card">
         <h2>Follow-up Cognitive Stage by Intervention Group</h2>
         <div id="stage_stack" style="height:380px"></div>
         <div class="note">x-axis: <b>Treatment</b> · y-axis: <b>Proportion of Participants (%)</b></div>
+      </section>
 
+      <!-- 独立文本框 -->
+      <section class="card wide">
+        <h2>Study Notes</h2>
         <div class="desc">
           This dashboard summarizes data from a randomized trial examining how mail and/or phone interventions influence
           mammography screening behavior. Most participants were between 50 and 70 years old. Compliance rates increased
-          across all intervention groups, with the <b>Mail + Phone</b> group achieving the highest rate (~39%).
+          across all intervention groups, with the <b>Mail &amp; Phone</b> group achieving the highest rate (~39%).
           The cognitive stage distribution further shows that mailed interventions helped more women progress to the
           <b>Action</b> stage compared with usual care, highlighting the effectiveness of tailored communication strategies
           in promoting mammography screening adherence.
@@ -75,7 +85,7 @@
   </div>
 
 <script>
-/* ============ 统一配色（图一与图二/三共用） ============ */
+/* ============ 统一配色（图一/二/三共用） ============ */
 const palette = ['#5b8fd6','#f39a3e','#e56767','#5ab2a6']; // Control / Phone / Mail / Mail & Phone
 
 /* ============ Plotly 基础布局 ============ */
@@ -115,9 +125,20 @@ Papa.parse(CSV_PATH,{
     const respCol = findCol(cols,['resp6','compliance6','six_month','screen6','y','Resp6']);
     const stageCol= findCol(cols,['stagefwup','fu_stage','followup_stage','stage','Stagefwup']);
 
+    // 把数值编码映射到文本标签：0→Control，1→Phone，2→Mail，3→Mail & Phone
+    const trtLabel = v => {
+      const s = (v ?? '').toString().trim();
+      if (s === '0') return 'Control';
+      if (s === '1') return 'Phone';
+      if (s === '2') return 'Mail';
+      if (s === '3' || s === '3.0') return 'Mail & Phone';
+      return s.replace('+',' & '); // 兜底：原表若已是文本
+    };
+
     const data=rows.map(r=>({
       age:num(r[ageCol]),
-      trt:(r[trtCol]||'').toString().trim(),
+      trt: trtLabel(r[trtCol]),
+      rawTrt: (r[trtCol]||'').toString().trim(),
       resp:(r[respCol]||'').toString().trim(),
       stage:(r[stageCol]||'').toString().trim()
     })).filter(x=>x.trt);
@@ -131,11 +152,10 @@ Papa.parse(CSV_PATH,{
       else d.resp=num(d.resp);
     }
 
-    // 统一显示名：Mail+Phone -> Mail & Phone
-    const normTrt = t => (t||'').replace('+',' & ');
+    // 顺序固定
     const order   = ['Control','Phone','Mail','Mail & Phone'];
 
-    /* ---------- 图1：年龄段分布（颜色采用与图二相同的 palette 逻辑） ---------- */
+    /* ---------- 图1：年龄段分布 ---------- */
     const bins=[
       {label:'50–54', in:a=>a>=50&&a<55},
       {label:'55–59', in:a=>a>=55&&a<60},
@@ -166,8 +186,8 @@ Papa.parse(CSV_PATH,{
       err('age_bar','Could not find an age column. Expected "age".');
     }
 
-    /* ---------- 图2：依从性（每个 treatment 一个 trace，图例标题=Treatment） ---------- */
-    const byTrt=groupBy(data.filter(d=>d.resp!=null), d=>normTrt(d.trt)||'Unknown');
+    /* ---------- 图2：依从性（Treatment 图例、顺序固定） ---------- */
+    const byTrt=groupBy(data.filter(d=>d.resp!=null), d=>d.trt || 'Unknown');
     const trts=Array.from(byTrt.keys()).sort((a,b)=>{
       const ia=order.indexOf(a), ib=order.indexOf(b);
       return (ia===-1)-(ib===-1) || ia-ib || a.localeCompare(b);
@@ -188,7 +208,7 @@ Papa.parse(CSV_PATH,{
       const layout={
         ...baseLayout,
         barmode:'group',
-        xaxis:{...baseLayout.xaxis, title:'Intervention', categoryorder:'array', categoryarray:trts},
+        xaxis:{...baseLayout.xaxis, title:'Intervention', categoryorder:'array', categoryarray:order},
         yaxis:{...baseLayout.yaxis, title:'Compliance (%)', rangemode:'tozero'},
         margin:{t:28,r:120,b:54,l:56}
       };
@@ -197,11 +217,11 @@ Papa.parse(CSV_PATH,{
       err('compliance_bar','Could not compute compliance — check columns treatment/resp6.');
     }
 
-    /* ---------- 图3：随访认知阶段（高度=380px，图例标题=Stagefwup） ---------- */
+    /* ---------- 图3：随访认知阶段（与图一/二同尺寸；图例标题=Stagefwup） ---------- */
     const stageByTrt=new Map(); const stagesSet=new Set();
     for(const d of data){
       if(!d.trt || !d.stage) continue;
-      const t = normTrt(d.trt);
+      const t = d.trt;
       const m = stageByTrt.get(t) || new Map();
       m.set(d.stage, (m.get(d.stage)||0)+1);
       stageByTrt.set(t, m);
@@ -209,7 +229,7 @@ Papa.parse(CSV_PATH,{
     }
     const stages = Array.from(stagesSet).sort();
     if(stageByTrt.size){
-      const x = trts.length ? trts : Array.from(stageByTrt.keys());
+      const x = order.filter(t=>stageByTrt.has(t)); // 只展示存在的组，且按固定顺序
       const totals = x.map(t=>{ const m=stageByTrt.get(t)||new Map(); let s=0; for(const v of m.values()) s+=v; return s||1; });
       const traces = stages.map((s,i)=>({
         type:'bar', name:s, x:x,
@@ -222,7 +242,7 @@ Papa.parse(CSV_PATH,{
       const layout={
         ...baseLayout,
         barmode:'stack',
-        xaxis:{...baseLayout.xaxis, title:'Treatment'},
+        xaxis:{...baseLayout.xaxis, title:'Treatment', categoryorder:'array', categoryarray:order},
         yaxis:{...baseLayout.yaxis, title:'Proportion of Participants (%)', range:[0,100]},
         legend:{...baseLayout.legend, orientation:'v', x:1.02, y:1}
       };
