@@ -11,25 +11,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     :root{
-      /* 深色主题 + 更柔和配色 */
+      /* 深色主题 */
       --bg:#0b0f14; --bg-soft:#0f1722; --border:#1b2737;
       --text:#eaf0fb; --muted:#a9b6d6; --ring:#223147; --title:#f3f6ff;
-
-      /* 年龄配色（柔和协调的渐变） */
-      --age1:#6aa5ff;
-      --age2:#72c8dc;
-      --age3:#6cd0a3;
-      --age4:#a8d35d;
-      --age5:#e6b84c;
-      --age6:#f59874;
-      --age7:#dc89c6;
-      --age8:#b48fff;
-
-      /* Treatment 颜色（与你代码相同） */
-      --t1:#5b8fd6; 
-      --t2:#f39a3e; 
-      --t3:#e56767; 
-      --t4:#5ab2a6; 
     }
     html,body{
       margin:0; background:var(--bg); color:var(--text);
@@ -91,9 +75,12 @@
   </div>
 
 <script>
-const palette = ['#5b8fd6','#f39a3e','#e56767','#5ab2a6'];  // 用于第二图颜色
+/* ============ 统一配色（图一与图二/三共用） ============ */
+const palette = ['#5b8fd6','#f39a3e','#e56767','#5ab2a6']; // Control / Phone / Mail / Mail & Phone
+
+/* ============ Plotly 基础布局 ============ */
 const baseLayout = {
-  margin:{t:26,r:120,b:56,l:60},
+  margin:{t:26,r:120,b:56,l:60},          // 右侧留白给竖向 legend
   font:{family:'Inter, ui-sans-serif, system-ui', color:'#eaf0fb'},
   paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)',
   xaxis:{gridcolor:'var(--ring)', zerolinecolor:'var(--ring)', linecolor:'var(--ring)', ticks:'outside', tickcolor:'var(--ring)'},
@@ -103,6 +90,7 @@ const baseLayout = {
   hoverlabel:{bgcolor:'#0f1722', bordercolor:'#223147', font:{color:'#eaf0fb'}}
 };
 
+/* ============ 工具函数 ============ */
 function findCol(cols, aliases){
   const norm = s=> String(s).toLowerCase().replace(/\W+/g,'');
   const nc = cols.map(c=>({raw:c, k:norm(c)}));
@@ -114,18 +102,27 @@ const num=x=>Number.isFinite(Number(x))?Number(x):null;
 function groupBy(arr, keyFn){const m=new Map();for(const r of arr){const k=keyFn(r);if(!m.has(k))m.set(k,[]);m.get(k).push(r);}return m;}
 function err(id,msg){const el=document.getElementById(id);if(el)el.innerHTML=`<div class="error">${msg}</div>`;}
 
+/* ============ 读取 CSV 并绘图 ============ */
 const CSV_PATH='mammography_data.csv';
 Papa.parse(CSV_PATH,{
   download:true, header:true, skipEmptyLines:true,
   complete: function(res){
     if(!res?.data?.length){['age_bar','compliance_bar','stage_stack'].forEach(id=>err(id,'No data rows found.'));return;}
     const rows=res.data, cols=res.meta.fields||Object.keys(rows[0]);
-    const ageCol=findCol(cols,['age','ages','Age']);
-    const trtCol=findCol(cols,['treatment','treatment_f','group','arm','Treatment']);
-    const respCol=findCol(cols,['resp6','compliance6','six_month','screen6','y','Resp6']);
-    const stageCol=findCol(cols,['stagefwup','fu_stage','followup_stage','stage','Stagefwup']);
-    const data=rows.map(r=>({age:num(r[ageCol]),trt:(r[trtCol]||'').toString().trim(),resp:(r[respCol]||'').toString().trim(),stage:(r[stageCol]||'').toString().trim()})).filter(x=>x.trt);
 
+    const ageCol  = findCol(cols,['age','ages','Age']);
+    const trtCol  = findCol(cols,['treatment','treatment_f','group','arm','Treatment']);
+    const respCol = findCol(cols,['resp6','compliance6','six_month','screen6','y','Resp6']);
+    const stageCol= findCol(cols,['stagefwup','fu_stage','followup_stage','stage','Stagefwup']);
+
+    const data=rows.map(r=>({
+      age:num(r[ageCol]),
+      trt:(r[trtCol]||'').toString().trim(),
+      resp:(r[respCol]||'').toString().trim(),
+      stage:(r[stageCol]||'').toString().trim()
+    })).filter(x=>x.trt);
+
+    // 归一化 resp -> 0/1
     for(const d of data){
       const s=String(d.resp).toLowerCase();
       if(s===''||s==='na'||s==='null'){d.resp=null;continue;}
@@ -134,79 +131,107 @@ Papa.parse(CSV_PATH,{
       else d.resp=num(d.resp);
     }
 
-    const order=['Control','Phone','Mail','Mail+Phone','Mail & Phone'];
-    const normTrt=t=>t.replace('+',' & ');
+    // 统一显示名：Mail+Phone -> Mail & Phone
+    const normTrt = t => (t||'').replace('+',' & ');
+    const order   = ['Control','Phone','Mail','Mail & Phone'];
 
-    /* ---------- 图1：年龄段分布 ---------- */
+    /* ---------- 图1：年龄段分布（颜色采用与图二相同的 palette 逻辑） ---------- */
     const bins=[
-      {label:'50–54', in:a=>a>=50&&a<55, color:'var(--age1)'},
-      {label:'55–59', in:a=>a>=55&&a<60, color:'var(--age2)'},
-      {label:'60–64', in:a=>a>=60&&a<65, color:'var(--age3)'},
-      {label:'65–69', in:a=>a>=65&&a<70, color:'var(--age4)'},
-      {label:'70–74', in:a=>a>=70&&a<75, color:'var(--age5)'},
-      {label:'75–79', in:a=>a>=75&&a<80, color:'var(--age6)'},
-      {label:'80–84', in:a=>a>=80&&a<85, color:'var(--age7)'},
-      {label:'>85', in:a=>a>=85, color:'var(--age8)'}
+      {label:'50–54', in:a=>a>=50&&a<55},
+      {label:'55–59', in:a=>a>=55&&a<60},
+      {label:'60–64', in:a=>a>=60&&a<65},
+      {label:'65–69', in:a=>a>=65&&a<70},
+      {label:'70–74', in:a=>a>=70&&a<75},
+      {label:'75–79', in:a=>a>=75&&a<80},
+      {label:'80–84', in:a=>a>=80&&a<85},
+      {label:'>85',   in:a=>a>=85}
     ];
     const ages=data.map(d=>d.age).filter(v=>v!=null);
     if(ages.length){
-      const traces=bins.map(b=>{
+      const traces=bins.map((b,i)=>{
         const n=ages.filter(a=>b.in(a)).length;
-        return{type:'bar',name:b.label,x:[b.label],y:[n],
-               marker:{color:b.color,line:{color:'rgba(255,255,255,.2)',width:1}},
-               text:[n],textposition:'outside',
-               hovertemplate:`Age Range: ${b.label}<br>Count: %{y}<extra></extra>`};
+        return {
+          type:'bar', name:b.label, x:[b.label], y:[n],
+          marker:{ color: palette[i % palette.length], line:{color:'rgba(255,255,255,.2)', width:1} },
+          text:[n], textposition:'outside',
+          hovertemplate:`Age Range: ${b.label}<br>Count: %{y}<extra></extra>`
+        };
       });
-      const layout={...baseLayout,barmode:'group',
-        xaxis:{...baseLayout.xaxis,title:'Age Range (years)'},
-        yaxis:{...baseLayout.yaxis,title:'Number of Participants',rangemode:'tozero'}
+      const layout={...baseLayout, barmode:'group',
+        xaxis:{...baseLayout.xaxis, title:'Age Range (years)'},
+        yaxis:{...baseLayout.yaxis, title:'Number of Participants', rangemode:'tozero'}
       };
-      Plotly.newPlot('age_bar',traces,layout,{displaylogo:false,responsive:true});
-    }else err('age_bar','No age column found.');
+      Plotly.newPlot('age_bar', traces, layout, {displaylogo:false, responsive:true});
+    } else {
+      err('age_bar','Could not find an age column. Expected "age".');
+    }
 
-    /* ---------- 图2：依从性（使用你提供的颜色逻辑） ---------- */
-    const byTrt=groupBy(data.filter(d=>d.resp!=null),d=>d.trt||'Unknown');
+    /* ---------- 图2：依从性（每个 treatment 一个 trace，图例标题=Treatment） ---------- */
+    const byTrt=groupBy(data.filter(d=>d.resp!=null), d=>normTrt(d.trt)||'Unknown');
     const trts=Array.from(byTrt.keys()).sort((a,b)=>{
-      const ia=order.indexOf(a),ib=order.indexOf(b);
-      return (ia===-1)-(ib===-1)||ia-ib||a.localeCompare(b);
+      const ia=order.indexOf(a), ib=order.indexOf(b);
+      return (ia===-1)-(ib===-1) || ia-ib || a.localeCompare(b);
     });
     const rates=trts.map(t=>{
-      const arr=byTrt.get(t)||[];
-      const m=arr.filter(x=>x.resp===1).length;
-      return arr.length?m/arr.length*100:0;
+      const arr=byTrt.get(t)||[]; const m=arr.filter(x=>x.resp===1).length;
+      return arr.length? m/arr.length*100 : 0;
     });
     if(trts.length){
-      const bar={type:'bar',x:trts,y:rates,
-        text:rates.map(v=>v.toFixed(1)+'%'),textposition:'outside',
-        marker:{color:palette.map((c,i)=>palette[i%palette.length])},
-        hovertemplate:'%{x}<br>Compliance: %{y:.1f}%<extra></extra>'};
-      const layout={...baseLayout,
-        xaxis:{...baseLayout.xaxis,title:'Intervention'},
-        yaxis:{...baseLayout.yaxis,title:'Compliance (%)',rangemode:'tozero'},
-        margin:{t:28,r:18,b:54,l:56}};
-      Plotly.newPlot('compliance_bar',[bar],layout,{displaylogo:false,responsive:true});
-    }else err('compliance_bar','Could not compute compliance.');
+      const trtTraces = trts.map((t,i)=>({
+        type:'bar', name:t, x:[t], y:[rates[i]],
+        marker:{ color: palette[i % palette.length] },
+        text:[rates[i].toFixed(1)+'%'], textposition:'outside',
+        hovertemplate:`${t}<br>Compliance: %{y:.1f}%<extra></extra>`,
+        legendgroup:'trt',
+        legendgrouptitle: i===0 ? { text:'Treatment' } : undefined
+      }));
+      const layout={
+        ...baseLayout,
+        barmode:'group',
+        xaxis:{...baseLayout.xaxis, title:'Intervention', categoryorder:'array', categoryarray:trts},
+        yaxis:{...baseLayout.yaxis, title:'Compliance (%)', rangemode:'tozero'},
+        margin:{t:28,r:120,b:54,l:56}
+      };
+      Plotly.newPlot('compliance_bar', trtTraces, layout, {displaylogo:false, responsive:true});
+    } else {
+      err('compliance_bar','Could not compute compliance — check columns treatment/resp6.');
+    }
 
-    /* ---------- 图3：阶段堆叠，高度与前两个一致 ---------- */
-    const stageByTrt=new Map();const stagesSet=new Set();
-    for(const d of data){if(!d.trt||!d.stage)continue;
-      const t=normTrt(d.trt);const m=stageByTrt.get(t)||new Map();
-      m.set(d.stage,(m.get(d.stage)||0)+1);stageByTrt.set(t,m);stagesSet.add(d.stage);}
-    const stages=Array.from(stagesSet).sort();
+    /* ---------- 图3：随访认知阶段（高度=380px，图例标题=Stagefwup） ---------- */
+    const stageByTrt=new Map(); const stagesSet=new Set();
+    for(const d of data){
+      if(!d.trt || !d.stage) continue;
+      const t = normTrt(d.trt);
+      const m = stageByTrt.get(t) || new Map();
+      m.set(d.stage, (m.get(d.stage)||0)+1);
+      stageByTrt.set(t, m);
+      stagesSet.add(d.stage);
+    }
+    const stages = Array.from(stagesSet).sort();
     if(stageByTrt.size){
-      const x=trts.length?trts:Array.from(stageByTrt.keys());
-      const totals=x.map(t=>{const m=stageByTrt.get(t)||new Map();let s=0;for(const v of m.values())s+=v;return s||1;});
-      const traces=stages.map((s,i)=>({type:'bar',name:s,x:x,
-        y:x.map((t,idx)=>((stageByTrt.get(t)?.get(s))||0)/totals[idx]*100),
-        marker:{color:palette[i%palette.length]},
-        hovertemplate:`%{x}<br>${s}: %{y:.2f}%<extra></extra>`}));
-      const layout={...baseLayout,barmode:'stack',
-        xaxis:{...baseLayout.xaxis,title:'Treatment'},
-        yaxis:{...baseLayout.yaxis,title:'Proportion of Participants (%)',range:[0,100]},
-        legend:{...baseLayout.legend,orientation:'v',x:1.02,y:1}};
-      Plotly.newPlot('stage_stack',traces,layout,{displaylogo:false,responsive:true});
-    }else err('stage_stack','No follow-up stage column.');
-  }
+      const x = trts.length ? trts : Array.from(stageByTrt.keys());
+      const totals = x.map(t=>{ const m=stageByTrt.get(t)||new Map(); let s=0; for(const v of m.values()) s+=v; return s||1; });
+      const traces = stages.map((s,i)=>({
+        type:'bar', name:s, x:x,
+        y:x.map((t,idx)=> ((stageByTrt.get(t)?.get(s))||0) / totals[idx] * 100),
+        marker:{ color: palette[i % palette.length] },
+        hovertemplate:`%{x}<br>${s}: %{y:.2f}%<extra></extra>`,
+        legendgroup:'stage',
+        legendgrouptitle: i===0 ? { text:'Stagefwup' } : undefined
+      }));
+      const layout={
+        ...baseLayout,
+        barmode:'stack',
+        xaxis:{...baseLayout.xaxis, title:'Treatment'},
+        yaxis:{...baseLayout.yaxis, title:'Proportion of Participants (%)', range:[0,100]},
+        legend:{...baseLayout.legend, orientation:'v', x:1.02, y:1}
+      };
+      Plotly.newPlot('stage_stack', traces, layout, {displaylogo:false, responsive:true});
+    } else {
+      err('stage_stack','Could not find a follow-up stage column (e.g., fu_stage).');
+    }
+  },
+  error: function(e){ ['age_bar','compliance_bar','stage_stack'].forEach(id=>err(id,'Failed to load CSV: '+e)); }
 });
 </script>
 </body>
