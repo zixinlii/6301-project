@@ -5,41 +5,41 @@
   <title>Visualizing the Effects of Tailored Interventions on Mammography Screening</title>
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <style>
+    html, body{
+      margin:0;
+      padding:0;
+      background:#ffffff;
+      color:#333333;
+      font-family:"Helvetica Neue", Arial, sans-serif;
+    }
+    .page{
+      max-width:1450px;
+      margin:24px auto 32px;
+      padding:0 32px;
+    }
+    h1{
+      font-size:36px;
+      line-height:1.15;
+      font-weight:700;
+      margin:0 0 24px;
+    }
+    h2{
+      font-size:24px;
+      font-weight:600;
+      margin:0 0 8px;
+    }
 
-<style>
-  html, body{
-    margin:0;
-    padding:0;
-    background:#ffffff;
-    color:#333333;
-    font-family:"Helvetica Neue", Arial, sans-serif;
-  }
-  .page{
-    max-width:1450px;
-    margin:24px auto 32px;
-    padding:0 32px;
-  }
-  h1{
-    font-size:36px;
-    line-height:1.15;
-    font-weight:700;
-    margin:0 0 24px;
-  }
-  h2{
-    font-size:24px;
-    font-weight:600;
-    margin:0 0 8px;
-  }
+    /* === 三列布局：左 Age+文字，中两张图，右整列图例 === */
+    .layout{
+      display:grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 0.5fr);
+      grid-template-rows:auto auto;
+      column-gap:36px;
+      row-gap:32px;
+      align-items:start;
+    }
 
-  .layout{
-    display:grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 2.1fr) minmax(0, 0.3fr);
-    grid-template-rows:auto auto;
-    column-gap:36px;
-    row-gap:32px;
-    align-items:start;
-  }
-  
     .panel{
       position:relative;
     }
@@ -62,6 +62,7 @@
       font-size:13px;
       line-height:1.5;
       align-self:flex-start;
+      min-width:140px; /* 防止彩色方块被裁掉 */
     }
     .legend-group{
       margin-bottom:18px;
@@ -153,23 +154,19 @@
 
       <div class="legend-group">
         <div class="legend-title">Stagefwup</div>
-
-          <div class="legend-item">
+        <div class="legend-item">
           <span class="legend-swatch" style="background:#5b8fd6;"></span>
           Precontemplation
-          </div>
-
-          <div class="legend-item">
+        </div>
+        <div class="legend-item">
           <span class="legend-swatch" style="background:#f39a3e;"></span>
           Contemplation
-          </div>
-
-          <div class="legend-item">
+        </div>
+        <div class="legend-item">
           <span class="legend-swatch" style="background:#e56767;"></span>
           Action
-          </div>
+        </div>
       </div>
-
     </aside>
 
   </div>
@@ -277,95 +274,96 @@ Papa.parse('mammography_data.csv', {
 
     // ---------- Age distribution ----------
     const ageBins = [
-  {label:'50–54', in:a => a>=50 && a<55},
-  {label:'55–59', in:a => a>=55 && a<60},
-  {label:'60–64', in:a => a>=60 && a<65},
-  {label:'65–69', in:a => a>=65 && a<70},
-  {label:'70–74', in:a => a>=70 && a<75},
-  {label:'75–79', in:a => a>=75 && a<80},
-  {label:'80–84', in:a => a>=80 && a<85},
-  {label:'>85',   in:a => a>=85}
-];
-const ages = data.map(d => d.age).filter(v => v != null);
-const ageCounts = ageBins.map(bin => ages.filter(a => bin.in(a)).length);
-const maxAgeCount = Math.max(...ageCounts);   // 新增：找最大值
+      {label:'50–54', in:a => a>=50 && a<55},
+      {label:'55–59', in:a => a>=55 && a<60},
+      {label:'60–64', in:a => a>=60 && a<65},
+      {label:'65–69', in:a => a>=65 && a<70},
+      {label:'70–74', in:a => a>=70 && a<75},
+      {label:'75–79', in:a => a>=75 && a<80},
+      {label:'80–84', in:a => a>=80 && a<85},
+      {label:'>85',   in:a => a>=85}
+    ];
+    const ages = data.map(d => d.age).filter(v => v != null);
+    const ageCounts = ageBins.map(bin => ages.filter(a => bin.in(a)).length);
+    const maxAgeCount = Math.max(...ageCounts);
 
-Plotly.newPlot('age_chart', [{
-  type:'bar',
-  x: ageBins.map(b => b.label),
-  y: ageCounts,
-  marker:{
-    color: ageColors,
-    line:{ color:'#ffffff', width:1 }
-  },
-  text: ageCounts.map(String),
-  textposition:'outside',
-  hovertemplate:'Age Range: %{x}<br>Count: %{y}<extra></extra>'
-}], {
-  margin:{t:40,r:10,b:60,l:70},
-  paper_bgcolor:'rgba(0,0,0,0)',
-  plot_bgcolor:'rgba(0,0,0,0)',
-  showlegend:false,
-  xaxis:{
-    title:'Age Range (years)',
-    tickfont:{size:12},
-    linecolor:'#bbbbbb',
-    mirror:true
-  },
-  yaxis:{
-    title:'Number of Participants',
-    range:[0, maxAgeCount + 20],
-    gridcolor:'#e5e5e5',
-    zerolinecolor:'#e5e5e5',
-    linecolor:'#bbbbbb',
-    mirror:true,
-    tickfont:{size:12}
-  },
-  font:{family:"Helvetica Neue, Arial, sans-serif", size:12, color:'#333333'}
-}, {displaylogo:false, responsive:true});
+    Plotly.newPlot('age_chart', [{
+      type:'bar',
+      x: ageBins.map(b => b.label),
+      y: ageCounts,
+      marker:{
+        color: ageColors,
+        line:{ color:'#ffffff', width:1 }
+      },
+      text: ageCounts.map(String),
+      textposition:'outside',
+      hovertemplate:'Age Range: %{x}<br>Count: %{y}<extra></extra>'
+    }], {
+      margin:{t:40,r:10,b:60,l:70},
+      paper_bgcolor:'rgba(0,0,0,0)',
+      plot_bgcolor:'rgba(0,0,0,0)',
+      showlegend:false,
+      xaxis:{
+        title:'Age Range (years)',
+        tickfont:{size:12},
+        linecolor:'#bbbbbb',
+        mirror:true
+      },
+      yaxis:{
+        title:'Number of Participants',
+        range:[0, maxAgeCount + 20], /* 给顶部文字留空间 */
+        gridcolor:'#e5e5e5',
+        zerolinecolor:'#e5e5e5',
+        linecolor:'#bbbbbb',
+        mirror:true,
+        tickfont:{size:12}
+      },
+      font:{family:"Helvetica Neue, Arial, sans-serif", size:12, color:'#333333'}
+    }, {displaylogo:false, responsive:true});
 
     // ---------- Compliance by treatment ----------
     const byTrt = groupBy(data.filter(d => d.resp != null && d.trt), d => d.trt);
-const trts = trtOrder.filter(t => byTrt.has(t));
-const rates = trts.map(t => {
-  const arr = byTrt.get(t);
-  const m = arr.filter(x => x.resp === 1).length;
-  return arr.length ? m / arr.length * 100 : 0;
-});
-const maxRate = Math.max(...rates);   // 新增：最大依从率
+    const trts = trtOrder.filter(t => byTrt.has(t));
+    const rates = trts.map(t => {
+      const arr = byTrt.get(t);
+      const m = arr.filter(x => x.resp === 1).length;
+      return arr.length ? m / arr.length * 100 : 0;
+    });
+    const maxRate = Math.max(...rates);
 
-Plotly.newPlot('comp_chart', [{
-  type:'bar',
-  x: trts,
-  y: rates,
-  marker:{
-    color: trts.map(t => trtColors[t] || '#999999')
-  },
-  text: rates.map(v => Math.round(v) + '%'),
-  textposition:'outside',
-  hovertemplate:'%{x}<br>Compliance: %{y:.1f}%<extra></extra>'
-}], {
-  margin:{t:40,r:10,b:60,l:80},
-  paper_bgcolor:'rgba(0,0,0,0)',
-  plot_bgcolor:'rgba(0,0,0,0)',
-  showlegend:false,
-  xaxis:{
-    title:'Treatment',
-    categoryorder:'array',
-    categoryarray:trtOrder,
-    linecolor:'#bbbbbb',
-    mirror:true
-  },
-  yaxis:{
-    title:'Mammography Compliance (%)',
-    range:[0, maxRate + 5],
-    gridcolor:'#e5e5e5',
-    zerolinecolor:'#e5e5e5',
-    linecolor:'#bbbbbb',
-    mirror:true
-  },
-  font:{family:"Helvetica Neue, Arial, sans-serif", size:12, color:'#333333'}
-}, {displaylogo:false, responsive:true});
+    Plotly.newPlot('comp_chart', [{
+      type:'bar',
+      x: trts,
+      y: rates,
+      marker:{
+        color: trts.map(t => trtColors[t] || '#999999')
+      },
+      text: rates.map(v => Math.round(v) + '%'),
+      textposition:'outside',
+      hovertemplate:'%{x}<br>Compliance: %{y:.1f}%<extra></extra>'
+    }], {
+      margin:{t:40,r:10,b:60,l:80},
+      paper_bgcolor:'rgba(0,0,0,0)',
+      plot_bgcolor:'rgba(0,0,0,0)',
+      showlegend:false,
+      xaxis:{
+        title:'Treatment',
+        categoryorder:'array',
+        categoryarray:trtOrder,
+        linecolor:'#bbbbbb',
+        mirror:true
+      },
+      yaxis:{
+        title:'Mammography Compliance (%)',
+        range:[0, maxRate + 5], /* 保证 39% 文字不被裁掉 */
+        gridcolor:'#e5e5e5',
+        zerolinecolor:'#e5e5e5',
+        linecolor:'#bbbbbb',
+        mirror:true
+      },
+      font:{family:"Helvetica Neue, Arial, sans-serif", size:12, color:'#333333'}
+    }, {displaylogo:false, responsive:true});
+
     // ---------- Follow-up cognitive stage ----------
     const stageByTrt = {};
     data.forEach(d => {
