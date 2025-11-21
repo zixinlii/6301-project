@@ -38,3 +38,7 @@ Some browsers block `file://` AJAX requests, so it is safer to use a local serve
 
    ```bash
    python -m http.server 8000
+
+AI Usage Statement
+
+This project was developed with the assistance of AI tools (such as ChatGPT) for tasks including debugging, code explanation, documentation drafting, and improving clarity of written text. All final decisions regarding code structure, visualization design, and analytical interpretation were made by me. The dataset analysis, visualization logic, and implementation were conducted independently, and AI tools were used only as supportive resources, not as automated code generators for the final system.
