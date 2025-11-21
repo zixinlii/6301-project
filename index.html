@@ -32,13 +32,12 @@
 
     .layout{
       display:grid;
-      grid-template-columns: minmax(0, 1.5fr) minmax(0, 2fr) minmax(0, 0.45fr);
+      grid-template-columns: minmax(0, 1.35fr) minmax(0, 2fr) minmax(0, 0.45fr);
       grid-template-rows:auto auto;
       column-gap:36px;
       row-gap:32px;
       align-items:start;
     }
-
 
     .panel{
       position:relative;
@@ -55,6 +54,10 @@
 
     .comp-panel{  grid-column:2 / 3; grid-row:1 / 2; }
     .stage-panel{ grid-column:2 / 3; grid-row:2 / 3; }
+
+    .age-panel h2{
+      white-space:nowrap;
+    }
 
     .legend-panel{
       grid-column:3 / 4;
@@ -235,7 +238,8 @@ function findCol(cols, aliases){
 }
 
 // ---------- color palettes ----------
-const ageColors = ['#5b8fd6','#f39a3e','#e56767','#5ab2a6','#63a95a','#d4b548','#9a6ac6','#f08fb6'];
+const ageColors = ['#5b8fd6','#f39a3e','#e56767','#5ab2a6',
+                   '#63a95a','#d4b548','#9a6ac6','#f08fb6'];
 const trtColors = {
   'Control':'#5b8fd6',
   'Phone':'#f39a3e',
@@ -386,7 +390,7 @@ Papa.parse('mammography_data.csv', {
       },
       yaxis:{
         title:'Mammography Compliance (%)',
-        range:[0, maxRate + 5], // 保证 39% 文字不被裁掉
+        range:[0, maxRate + 5], 
         gridcolor:'#e5e5e5',
         zerolinecolor:'#e5e5e5',
         linecolor:'#bbbbbb',
@@ -460,7 +464,6 @@ Papa.parse('mammography_data.csv', {
     console.error('Failed to load CSV:', err);
   }
 });
-
 
 document.querySelectorAll(".legend-header").forEach(header => {
   header.addEventListener("click", () => {
