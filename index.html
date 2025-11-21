@@ -5,41 +5,43 @@
   <title>Visualizing the Effects of Tailored Interventions on Mammography Screening</title>
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-  <style>
-    html, body{
-      margin:0;
-      padding:0;
-      background:#ffffff;
-      color:#333333;
-      font-family:"Helvetica Neue", Arial, sans-serif;
-    }
-    .page{
-      max-width:1450px;
-      margin:24px auto 32px;
-      padding:0 32px;
-    }
-    h1{
-      font-size:36px;
-      line-height:1.15;
-      font-weight:700;
-      margin:0 0 24px;
-    }
-    h2{
-      font-size:24px;
-      font-weight:600;
-      margin:0 0 8px;
-    }
+  <!-- 只展示需要替换的 CSS 关键部分，其余与你原代码相同 -->
 
-    /* === 三列布局：左 Age+文字，中两张图，右整列图例 === */
-    .layout{
-      display:grid;
-      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.3fr) minmax(0, 0.7fr);
-      grid-template-rows:auto auto;
-      column-gap:36px;
-      row-gap:32px;
-      align-items:start;
-    }
+<style>
+  html, body{
+    margin:0;
+    padding:0;
+    background:#ffffff;
+    color:#333333;
+    font-family:"Helvetica Neue", Arial, sans-serif;
+  }
+  .page{
+    max-width:1450px;
+    margin:24px auto 32px;
+    padding:0 32px;
+  }
+  h1{
+    font-size:36px;
+    line-height:1.15;
+    font-weight:700;
+    margin:0 0 24px;
+  }
+  h2{
+    font-size:24px;
+    font-weight:600;
+    margin:0 0 8px;
+  }
 
+  /* === 三列布局：左、宽中间列、窄右侧 legend === */
+  .layout{
+    display:grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2.1fr) minmax(0, 0.3fr);
+    grid-template-rows:auto auto;
+    column-gap:36px;
+    row-gap:32px;
+    align-items:start;
+  }
+  
     .panel{
       position:relative;
     }
