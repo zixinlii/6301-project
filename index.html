@@ -30,7 +30,6 @@
       margin:0 0 8px;
     }
 
-    /* === 三列布局：左 Age+文字，中两张图，右整列图例 === */
     .layout{
       display:grid;
       grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 0.5fr);
@@ -62,26 +61,51 @@
       font-size:13px;
       line-height:1.5;
       align-self:flex-start;
-      min-width:140px; /* 防止彩色方块被裁掉 */
+      min-width:140px;
     }
-    .legend-group{
-      margin-bottom:18px;
+
+    .legend-section{
+      border-bottom:1px solid #ddd;
+      margin-bottom:12px;
+      padding-bottom:8px;
     }
-    .legend-group:last-child{
+    .legend-section:last-child{
+      border-bottom:none;
       margin-bottom:0;
+      padding-bottom:0;
     }
-    .legend-title{
+
+    .legend-header{
       font-weight:600;
-      margin-bottom:4px;
+      cursor:pointer;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:4px 0;
     }
+    .legend-header span{
+      font-weight:400;
+      margin-left:8px;
+    }
+    .legend-header:hover{
+      color:#0070c9;
+    }
+
+    .legend-content{
+      margin-top:6px;
+      padding-left:6px;
+      display:none;        
+    }
+
     .legend-item{
       display:flex;
       align-items:center;
-      margin-bottom:3px;
+      margin-bottom:4px;
     }
     .legend-item:last-child{
       margin-bottom:0;
     }
+
     .legend-swatch{
       width:12px;
       height:12px;
@@ -99,13 +123,11 @@
 
   <div class="layout">
 
-    <!-- 左上：年龄分布 -->
     <section class="panel age-panel">
       <h2>Age Distribution of Participants</h2>
       <div id="age_chart" class="chart" style="height:380px;"></div>
     </section>
 
-    <!-- 左下：文字说明 -->
     <section class="panel text-panel">
       <p>
         This dashboard summarizes data from a randomized trial examining how mail and/or phone
@@ -118,55 +140,63 @@
       </p>
     </section>
 
-    <!-- 中上：依从性 -->
     <section class="panel comp-panel">
       <h2>Mammography Compliance by Intervention Group</h2>
       <div id="comp_chart" class="chart" style="height:320px;"></div>
     </section>
 
-    <!-- 中下：随访阶段 -->
     <section class="panel stage-panel">
       <h2>Follow-up Cognitive Stage by Intervention Group</h2>
       <div id="stage_chart" class="chart" style="height:320px;"></div>
     </section>
 
-    <!-- 右整列：图例 -->
     <aside class="legend-panel">
-      <div class="legend-group">
-        <div class="legend-title">Age Range (years)</div>
-        <div class="legend-item"><span class="legend-swatch" style="background:#5b8fd6;"></span>50–54</div>
-        <div class="legend-item"><span class="legend-swatch" style="background:#f39a3e;"></span>55–59</div>
-        <div class="legend-item"><span class="legend-swatch" style="background:#e56767;"></span>60–64</div>
-        <div class="legend-item"><span class="legend-swatch" style="background:#5ab2a6;"></span>65–69</div>
-        <div class="legend-item"><span class="legend-swatch" style="background:#63a95a;"></span>70–74</div>
-        <div class="legend-item"><span class="legend-swatch" style="background:#d4b548;"></span>75–79</div>
-        <div class="legend-item"><span class="legend-swatch" style="background:#9a6ac6;"></span>80–84</div>
-        <div class="legend-item"><span class="legend-swatch" style="background:#f08fb6;"></span>&gt;85</div>
+
+      <!-- Age Range -->
+      <div class="legend-section">
+        <div class="legend-header" data-target="age-legend">
+          Age Range (years)
+          <span>+</span>
+        </div>
+        <div class="legend-content" id="age-legend">
+          <div class="legend-item"><span class="legend-swatch" style="background:#5b8fd6;"></span>50–54</div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#f39a3e;"></span>55–59</div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#e56767;"></span>60–64</div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#5ab2a6;"></span>65–69</div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#63a95a;"></span>70–74</div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#d4b548;"></span>75–79</div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#9a6ac6;"></span>80–84</div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#f08fb6;"></span>&gt;85</div>
+        </div>
       </div>
 
-      <div class="legend-group">
-        <div class="legend-title">Treatment</div>
-        <div class="legend-item"><span class="legend-swatch" style="background:#5b8fd6;"></span>Control</div>
-        <div class="legend-item"><span class="legend-swatch" style="background:#f39a3e;"></span>Phone</div>
-        <div class="legend-item"><span class="legend-swatch" style="background:#e56767;"></span>Mail</div>
-        <div class="legend-item"><span class="legend-swatch" style="background:#5ab2a6;"></span>Mail &amp; Phone</div>
+      <!-- Treatment -->
+      <div class="legend-section">
+        <div class="legend-header" data-target="trt-legend">
+          Treatment
+          <span>+</span>
+        </div>
+        <div class="legend-content" id="trt-legend">
+          <div class="legend-item"><span class="legend-swatch" style="background:#5b8fd6;"></span>Control</div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#f39a3e;"></span>Phone</div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#e56767;"></span>Mail</div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#5ab2a6;"></span>Mail &amp; Phone</div>
+        </div>
       </div>
 
-      <div class="legend-group">
-        <div class="legend-title">Stagefwup</div>
-        <div class="legend-item">
-          <span class="legend-swatch" style="background:#5b8fd6;"></span>
-          Precontemplation
+      <!-- Stagefwup -->
+      <div class="legend-section">
+        <div class="legend-header" data-target="stage-legend">
+          Stagefwup
+          <span>+</span>
         </div>
-        <div class="legend-item">
-          <span class="legend-swatch" style="background:#f39a3e;"></span>
-          Contemplation
-        </div>
-        <div class="legend-item">
-          <span class="legend-swatch" style="background:#e56767;"></span>
-          Action
+        <div class="legend-content" id="stage-legend">
+          <div class="legend-item"><span class="legend-swatch" style="background:#5b8fd6;"></span>Precontemplation</div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#f39a3e;"></span>Contemplation</div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#e56767;"></span>Action</div>
         </div>
       </div>
+
     </aside>
 
   </div>
@@ -311,7 +341,7 @@ Papa.parse('mammography_data.csv', {
       },
       yaxis:{
         title:'Number of Participants',
-        range:[0, maxAgeCount + 20], /* 给顶部文字留空间 */
+        range:[0, maxAgeCount + 20], 
         gridcolor:'#e5e5e5',
         zerolinecolor:'#e5e5e5',
         linecolor:'#bbbbbb',
@@ -355,7 +385,7 @@ Papa.parse('mammography_data.csv', {
       },
       yaxis:{
         title:'Mammography Compliance (%)',
-        range:[0, maxRate + 5], /* 保证 39% 文字不被裁掉 */
+        range:[0, maxRate + 5], // 保证 39% 文字不被裁掉
         gridcolor:'#e5e5e5',
         zerolinecolor:'#e5e5e5',
         linecolor:'#bbbbbb',
@@ -428,6 +458,18 @@ Papa.parse('mammography_data.csv', {
   error: function(err){
     console.error('Failed to load CSV:', err);
   }
+});
+
+
+document.querySelectorAll(".legend-header").forEach(header => {
+  header.addEventListener("click", () => {
+    const targetId = header.dataset.target;
+    const content = document.getElementById(targetId);
+    const expanded = content.style.display === "block";
+
+    content.style.display = expanded ? "none" : "block";
+    header.querySelector("span").textContent = expanded ? "+" : "−";
+  });
 });
 </script>
 </body>
