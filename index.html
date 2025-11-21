@@ -264,94 +264,95 @@ Papa.parse('mammography_data.csv', {
 
     // ---------- Age distribution ----------
     const ageBins = [
-      {label:'50–54', in:a => a>=50 && a<55},
-      {label:'55–59', in:a => a>=55 && a<60},
-      {label:'60–64', in:a => a>=60 && a<65},
-      {label:'65–69', in:a => a>=65 && a<70},
-      {label:'70–74', in:a => a>=70 && a<75},
-      {label:'75–79', in:a => a>=75 && a<80},
-      {label:'80–84', in:a => a>=80 && a<85},
-      {label:'>85',   in:a => a>=85}
-    ];
-    const ages = data.map(d => d.age).filter(v => v != null);
-    const ageCounts = ageBins.map(bin => ages.filter(a => bin.in(a)).length);
+  {label:'50–54', in:a => a>=50 && a<55},
+  {label:'55–59', in:a => a>=55 && a<60},
+  {label:'60–64', in:a => a>=60 && a<65},
+  {label:'65–69', in:a => a>=65 && a<70},
+  {label:'70–74', in:a => a>=70 && a<75},
+  {label:'75–79', in:a => a>=75 && a<80},
+  {label:'80–84', in:a => a>=80 && a<85},
+  {label:'>85',   in:a => a>=85}
+];
+const ages = data.map(d => d.age).filter(v => v != null);
+const ageCounts = ageBins.map(bin => ages.filter(a => bin.in(a)).length);
+const maxAgeCount = Math.max(...ageCounts);   // 新增：找最大值
 
-    Plotly.newPlot('age_chart', [{
-      type:'bar',
-      x: ageBins.map(b => b.label),
-      y: ageCounts,
-      marker:{
-        color: ageColors,
-        line:{ color:'#ffffff', width:1 }
-      },
-      text: ageCounts.map(String),
-      textposition:'outside',
-      hovertemplate:'Age Range: %{x}<br>Count: %{y}<extra></extra>'
-    }], {
-      margin:{t:40,r:10,b:60,l:70},
-      paper_bgcolor:'rgba(0,0,0,0)',
-      plot_bgcolor:'rgba(0,0,0,0)',
-      showlegend:false,
-      xaxis:{
-        title:'Age Range (years)',
-        tickfont:{size:12},
-        linecolor:'#bbbbbb',
-        mirror:true
-      },
-      yaxis:{
-        title:'Number of Participants',
-        rangemode:'tozero',
-        gridcolor:'#e5e5e5',
-        zerolinecolor:'#e5e5e5',
-        linecolor:'#bbbbbb',
-        mirror:true,
-        tickfont:{size:12}
-      },
-      font:{family:"Helvetica Neue, Arial, sans-serif", size:12, color:'#333333'}
-    }, {displaylogo:false, responsive:true});
+Plotly.newPlot('age_chart', [{
+  type:'bar',
+  x: ageBins.map(b => b.label),
+  y: ageCounts,
+  marker:{
+    color: ageColors,
+    line:{ color:'#ffffff', width:1 }
+  },
+  text: ageCounts.map(String),
+  textposition:'outside',
+  hovertemplate:'Age Range: %{x}<br>Count: %{y}<extra></extra>'
+}], {
+  margin:{t:40,r:10,b:60,l:70},
+  paper_bgcolor:'rgba(0,0,0,0)',
+  plot_bgcolor:'rgba(0,0,0,0)',
+  showlegend:false,
+  xaxis:{
+    title:'Age Range (years)',
+    tickfont:{size:12},
+    linecolor:'#bbbbbb',
+    mirror:true
+  },
+  yaxis:{
+    title:'Number of Participants',
+    range:[0, maxAgeCount + 20],
+    gridcolor:'#e5e5e5',
+    zerolinecolor:'#e5e5e5',
+    linecolor:'#bbbbbb',
+    mirror:true,
+    tickfont:{size:12}
+  },
+  font:{family:"Helvetica Neue, Arial, sans-serif", size:12, color:'#333333'}
+}, {displaylogo:false, responsive:true});
 
     // ---------- Compliance by treatment ----------
     const byTrt = groupBy(data.filter(d => d.resp != null && d.trt), d => d.trt);
-    const trts = trtOrder.filter(t => byTrt.has(t));
-    const rates = trts.map(t => {
-      const arr = byTrt.get(t);
-      const m = arr.filter(x => x.resp === 1).length;
-      return arr.length ? m / arr.length * 100 : 0;
-    });
+const trts = trtOrder.filter(t => byTrt.has(t));
+const rates = trts.map(t => {
+  const arr = byTrt.get(t);
+  const m = arr.filter(x => x.resp === 1).length;
+  return arr.length ? m / arr.length * 100 : 0;
+});
+const maxRate = Math.max(...rates);   // 新增：最大依从率
 
-    Plotly.newPlot('comp_chart', [{
-      type:'bar',
-      x: trts,
-      y: rates,
-      marker:{
-        color: trts.map(t => trtColors[t] || '#999999')
-      },
-      text: rates.map(v => Math.round(v) + '%'),
-      textposition:'outside',
-      hovertemplate:'%{x}<br>Compliance: %{y:.1f}%<extra></extra>'
-    }], {
-      margin:{t:40,r:10,b:60,l:80},
-      paper_bgcolor:'rgba(0,0,0,0)',
-      plot_bgcolor:'rgba(0,0,0,0)',
-      showlegend:false,
-      xaxis:{
-        title:'Treatment',
-        categoryorder:'array',
-        categoryarray:trtOrder,
-        linecolor:'#bbbbbb',
-        mirror:true
-      },
-      yaxis:{
-        title:'Mammography Compliance (%)',
-        rangemode:'tozero',
-        gridcolor:'#e5e5e5',
-        zerolinecolor:'#e5e5e5',
-        linecolor:'#bbbbbb',
-        mirror:true
-      },
-      font:{family:"Helvetica Neue, Arial, sans-serif", size:12, color:'#333333'}
-    }, {displaylogo:false, responsive:true});
-
+Plotly.newPlot('comp_chart', [{
+  type:'bar',
+  x: trts,
+  y: rates,
+  marker:{
+    color: trts.map(t => trtColors[t] || '#999999')
+  },
+  text: rates.map(v => Math.round(v) + '%'),
+  textposition:'outside',
+  hovertemplate:'%{x}<br>Compliance: %{y:.1f}%<extra></extra>'
+}], {
+  margin:{t:40,r:10,b:60,l:80},
+  paper_bgcolor:'rgba(0,0,0,0)',
+  plot_bgcolor:'rgba(0,0,0,0)',
+  showlegend:false,
+  xaxis:{
+    title:'Treatment',
+    categoryorder:'array',
+    categoryarray:trtOrder,
+    linecolor:'#bbbbbb',
+    mirror:true
+  },
+  yaxis:{
+    title:'Mammography Compliance (%)',
+    range:[0, maxRate + 5],
+    gridcolor:'#e5e5e5',
+    zerolinecolor:'#e5e5e5',
+    linecolor:'#bbbbbb',
+    mirror:true
+  },
+  font:{family:"Helvetica Neue, Arial, sans-serif", size:12, color:'#333333'}
+}, {displaylogo:false, responsive:true});
     // ---------- Follow-up cognitive stage ----------
     const stageByTrt = {};
     data.forEach(d => {
